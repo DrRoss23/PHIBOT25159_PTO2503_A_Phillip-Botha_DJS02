@@ -14,7 +14,7 @@ The component is designed to be **modular, stateless, and framework-agnostic**, 
 - Emits a **`podcast-select`** custom event when clicked or activated with Enter / Space.  
 - Works completely independently from the main application logic.
 
-==========================================================================
+---
 
 ## 🧩 Project Structure
 
@@ -34,7 +34,7 @@ The component is designed to be **modular, stateless, and framework-agnostic**, 
 ┣ 📜 styles.css → global layout and modal styles
 ┗ 📜 README.md → project documentation
 
-==========================================================================
+---
 
 ## ⚙️ How to Run Locally
 
@@ -64,7 +64,7 @@ import "./src/components/PodcastPreview.js";
 
 Once imported, you can use <podcast-preview> elements anywhere in your HTML.
 
-==========================================================================
+---
 
 2️⃣ Passing Data
 
@@ -92,7 +92,7 @@ card.data = {
 };
 document.body.appendChild(card);
 
-==========================================================================
+---
 
 3️⃣ Listening for Interaction Events
 
@@ -105,7 +105,7 @@ document.addEventListener("podcast-select", (e) => {
 
 The parent application (in this case, src/index.js) listens for this event to open the modal.
 
-==========================================================================
+---
 
 ♿ Accessibility Highlights
 
@@ -129,7 +129,7 @@ Accessibility was a key focus in Phase 2:
 - Screen reader announcement
 (a)A hidden live region announces when the dialog opens (e.g., “Dialog opened: [Title]”)
 
-==========================================================================
+---
 
 🧪 Demo Page (Deliverable)
 
@@ -143,7 +143,7 @@ The demo includes:
 - One example using numeric genre IDs
 - Console logging and alert on event trigger
 
-==========================================================================
+---
 
 🧹 Code Quality & Maintainability
 
@@ -159,7 +159,7 @@ Consistent naming conventions across files
 
 Clear commit messages documenting each implementation phase
 
-==========================================================================
+---
 
 ✅ Summary
 Phase	Description	Status
@@ -177,10 +177,10 @@ Independent demo page
 
 Comprehensive documentation for use and review
 
-==========================================================================
+---
 
 Author: Phillip Botha
 Project: DJS02 – Web Component: Podcast Preview
 Course: CodeSpace Software Development Program
 
-==========================================================================
+---
