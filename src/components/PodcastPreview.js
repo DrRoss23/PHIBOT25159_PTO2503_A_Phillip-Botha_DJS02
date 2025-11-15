@@ -1,8 +1,9 @@
 // src/components/PodcastPreview.js
 // DJS02 – Reusable, encapsulated Web Component for a podcast preview.
-// - Stateless: accepts data via attributes or a .data property setter.
-// - Encapsulated: uses Shadow DOM so styles/markup don't leak.
-// - Communicates via a custom event `podcast-select` on click.
+// Accessibility additions in Phase 2:
+// - Host is keyboard-focusable (tabindex="0") and role="button"
+// - Space/Enter fire the same select event as click
+// - aria-label kept in sync with title + seasons for screen readers
 
 import { DateUtils } from "../utils/DateUtils.js";
 import { GenreService } from "../utils/GenreService.js";
@@ -14,6 +15,7 @@ TEMPLATE_HTML.innerHTML = `
       display: block;
       cursor: pointer;
       user-select: none;
+      outline: none; /* we'll show a custom outline on focus-visible */
     }
     .card {
       background: white;
@@ -24,11 +26,22 @@ TEMPLATE_HTML.innerHTML = `
       height: 100%;
     }
     .card:hover { transform: scale(1.02); }
+    /* High-contrast focus ring (respects prefers-reduced-motion for hover only) */
+    :host(:focus-visible) .card {
+      outline: 3px solid CanvasText;
+      outline-offset: 3px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .card { transition: none; }
+      .card:hover { transform: none; }
+    }
     .cover {
       width: 100%;
       height: auto;
       border-radius: 6px;
       display: block;
+      aspect-ratio: 1 / 1; /* consistent thumbnails if images vary */
+      object-fit: cover;
     }
     h3 {
       margin: .5rem 0 .25rem 0;
@@ -63,7 +76,6 @@ TEMPLATE_HTML.innerHTML = `
 
 export class PodcastPreview extends HTMLElement {
   static get observedAttributes() {
-    // reflect-only attributes (stateless)
     return ["pid", "title", "image", "genres", "seasons", "updated"];
   }
 
@@ -84,20 +96,32 @@ export class PodcastPreview extends HTMLElement {
     };
 
     // Click -> bubble a custom event to the parent app
-    this.$.card.addEventListener("click", () => {
-      this.dispatchEvent(
-        new CustomEvent("podcast-select", {
-          bubbles: true,
-          composed: true, // allow crossing shadow boundary
-          detail: this.value, // normalized shape
-        })
-      );
+    this.$.card.addEventListener("click", () => this._emitSelect());
+
+    // Keyboard: handle Enter/Space on the host
+    this.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault(); // prevent page scroll on Space
+        this._emitSelect();
+      }
     });
   }
 
+  connectedCallback() {
+    // A11y defaults: focusable button-like host
+    if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "0");
+    if (!this.hasAttribute("role")) this.setAttribute("role", "button");
+    this._syncAria();
+    this._render();
+  }
+
+  attributeChangedCallback() {
+    this._syncAria();
+    this._render();
+  }
+
   /**
-   * A normalized "value" the parent can rely on regardless of whether
-   * attributes or the .data setter was used.
+   * Normalized "value" regardless of attributes vs .data usage.
    */
   get value() {
     return {
@@ -114,7 +138,6 @@ export class PodcastPreview extends HTMLElement {
   /** Allow parent code to set a whole object: el.data = {...} */
   set data(obj) {
     this._data = obj ?? null;
-    // Reflect key fields to attributes so the component stays stateless by contract
     if (obj) {
       this.setAttribute("pid", obj.id ?? "");
       this.setAttribute("title", obj.title ?? "");
@@ -126,15 +149,17 @@ export class PodcastPreview extends HTMLElement {
     }
   }
 
-  attributeChangedCallback() {
-    this._render();
-  }
-
-  connectedCallback() {
-    this._render();
-  }
-
   // ---- private helpers ----
+  _emitSelect() {
+    this.dispatchEvent(
+      new CustomEvent("podcast-select", {
+        bubbles: true,
+        composed: true,
+        detail: this.value,
+      })
+    );
+  }
+
   _readInt(attr) {
     const v = this.getAttribute(attr);
     const n = Number(v);
@@ -142,14 +167,21 @@ export class PodcastPreview extends HTMLElement {
   }
 
   _readGenres() {
-    // Accept: "1,2,3" or "History,Comedy"
     const raw = this.getAttribute("genres");
     if (raw == null) return this._data?.genres ?? [];
     return raw
       .split(",")
-      .map(s => s.trim())
+      .map((s) => s.trim())
       .filter(Boolean)
-      .map(x => (isNaN(Number(x)) ? x : Number(x))); // keep numbers as numbers
+      .map((x) => (isNaN(Number(x)) ? x : Number(x)));
+  }
+
+  _syncAria() {
+    const t = this.getAttribute("title") || this._data?.title || "Podcast";
+    const s = this._readInt("seasons");
+    const seasonsLabel = s ? `${s} season${s > 1 ? "s" : ""}` : "";
+    const label = seasonsLabel ? `${t} — ${seasonsLabel}` : t;
+    this.setAttribute("aria-label", label);
   }
 
   _render() {
