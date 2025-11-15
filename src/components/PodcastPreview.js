@@ -89,7 +89,7 @@ export class PodcastPreview extends HTMLElement {
         new CustomEvent("podcast-select", {
           bubbles: true,
           composed: true, // allow crossing shadow boundary
-          detail: this.value, // always emit the same normalized shape
+          detail: this.value, // normalized shape
         })
       );
     });
@@ -107,7 +107,6 @@ export class PodcastPreview extends HTMLElement {
       genres: this._readGenres(),
       seasons: this._readInt("seasons"),
       updated: this.getAttribute("updated") || this._data?.updated || "",
-      // Pass through other fields if provided via .data (e.g., description)
       description: this._data?.description || "",
     };
   }
@@ -122,7 +121,6 @@ export class PodcastPreview extends HTMLElement {
       this.setAttribute("image", obj.image ?? "");
       this.setAttribute("seasons", obj.seasons ?? "");
       this.setAttribute("updated", obj.updated ?? "");
-      // Accept either array of ids or names; we reflect as comma-joined
       const g = Array.isArray(obj.genres) ? obj.genres.join(",") : (obj.genres ?? "");
       this.setAttribute("genres", g);
     }
@@ -151,7 +149,7 @@ export class PodcastPreview extends HTMLElement {
       .split(",")
       .map(s => s.trim())
       .filter(Boolean)
-      .map(x => isNaN(Number(x)) ? x : Number(x)); // keep numbers as numbers
+      .map(x => (isNaN(Number(x)) ? x : Number(x))); // keep numbers as numbers
   }
 
   _render() {
