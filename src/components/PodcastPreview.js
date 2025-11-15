@@ -1,9 +1,5 @@
 // src/components/PodcastPreview.js
-// DJS02 – Reusable, encapsulated Web Component for a podcast preview.
-// Accessibility additions in Phase 2:
-// - Host is keyboard-focusable (tabindex="0") and role="button"
-// - Space/Enter fire the same select event as click
-// - aria-label kept in sync with title + seasons for screen readers
+// Adds aria-haspopup="dialog" to indicate the card opens a dialog.
 
 import { DateUtils } from "../utils/DateUtils.js";
 import { GenreService } from "../utils/GenreService.js";
@@ -15,7 +11,7 @@ TEMPLATE_HTML.innerHTML = `
       display: block;
       cursor: pointer;
       user-select: none;
-      outline: none; /* we'll show a custom outline on focus-visible */
+      outline: none;
     }
     .card {
       background: white;
@@ -26,7 +22,6 @@ TEMPLATE_HTML.innerHTML = `
       height: 100%;
     }
     .card:hover { transform: scale(1.02); }
-    /* High-contrast focus ring (respects prefers-reduced-motion for hover only) */
     :host(:focus-visible) .card {
       outline: 3px solid CanvasText;
       outline-offset: 3px;
@@ -40,7 +35,7 @@ TEMPLATE_HTML.innerHTML = `
       height: auto;
       border-radius: 6px;
       display: block;
-      aspect-ratio: 1 / 1; /* consistent thumbnails if images vary */
+      aspect-ratio: 1 / 1;
       object-fit: cover;
     }
     h3 {
@@ -95,22 +90,23 @@ export class PodcastPreview extends HTMLElement {
       tags: this.shadowRoot.querySelector(".tags"),
     };
 
-    // Click -> bubble a custom event to the parent app
     this.$.card.addEventListener("click", () => this._emitSelect());
 
-    // Keyboard: handle Enter/Space on the host
     this.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault(); // prevent page scroll on Space
+        e.preventDefault();
         this._emitSelect();
       }
     });
   }
 
   connectedCallback() {
-    // A11y defaults: focusable button-like host
     if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "0");
     if (!this.hasAttribute("role")) this.setAttribute("role", "button");
+
+    // New: advertise that activation opens a dialog
+    if (!this.hasAttribute("aria-haspopup")) this.setAttribute("aria-haspopup", "dialog");
+
     this._syncAria();
     this._render();
   }
@@ -120,9 +116,6 @@ export class PodcastPreview extends HTMLElement {
     this._render();
   }
 
-  /**
-   * Normalized "value" regardless of attributes vs .data usage.
-   */
   get value() {
     return {
       id: this.getAttribute("pid") || this._data?.id || "",
@@ -135,7 +128,6 @@ export class PodcastPreview extends HTMLElement {
     };
   }
 
-  /** Allow parent code to set a whole object: el.data = {...} */
   set data(obj) {
     this._data = obj ?? null;
     if (obj) {
@@ -149,7 +141,6 @@ export class PodcastPreview extends HTMLElement {
     }
   }
 
-  // ---- private helpers ----
   _emitSelect() {
     this.dispatchEvent(
       new CustomEvent("podcast-select", {
@@ -187,17 +178,14 @@ export class PodcastPreview extends HTMLElement {
   _render() {
     const v = this.value;
 
-    // image & title
     this.$.img.src = v.image || "";
     this.$.img.alt = v.title || "Podcast cover";
     this.$.title.textContent = v.title || "";
 
-    // seasons + updated
     const s = Number.isFinite(v.seasons) ? v.seasons : 0;
     this.$.seasons.textContent = s ? `${s} season${s > 1 ? "s" : ""}` : "";
     this.$.updated.textContent = v.updated ? DateUtils.format(v.updated) : "";
 
-    // genres: accept ids or names; resolve ids via GenreService
     const names =
       typeof v.genres?.[0] === "number"
         ? GenreService.getNames(v.genres)
