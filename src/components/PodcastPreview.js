@@ -1,10 +1,8 @@
 // src/components/PodcastPreview.js
 // DJS02 – Reusable, encapsulated Web Component for a podcast preview.
-// Accessibility additions in Phase 2A:
-// - Host is keyboard focusable (tabindex="0") and role="button"
-// - ARIA label derived from title
-// - Keyboard activation (Enter/Space) dispatches the same custom event
-// - Visible focus ring inside Shadow DOM
+// - Stateless: accepts data via attributes or a .data property setter.
+// - Encapsulated: uses Shadow DOM so styles/markup don't leak.
+// - Communicates via a custom event `podcast-select` on click.
 
 import { DateUtils } from "../utils/DateUtils.js";
 import { GenreService } from "../utils/GenreService.js";
@@ -16,26 +14,16 @@ TEMPLATE_HTML.innerHTML = `
       display: block;
       cursor: pointer;
       user-select: none;
-      outline: none; /* we render our own focus */
     }
     .card {
       background: white;
       padding: 1rem;
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      transition: transform .2s ease, box-shadow .2s ease;
+      transition: transform .2s ease;
       height: 100%;
     }
     .card:hover { transform: scale(1.02); }
-    :host(:focus) .card,
-    :host(:focus-visible) .card {
-      box-shadow: 0 0 0 3px rgba(59,130,246,0.5), 0 2px 6px rgba(0,0,0,0.1);
-      transform: translateZ(0); /* avoid layout shift */
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .card { transition: none; }
-      .card:hover { transform: none; }
-    }
     .cover {
       width: 100%;
       height: auto;
@@ -75,6 +63,7 @@ TEMPLATE_HTML.innerHTML = `
 
 export class PodcastPreview extends HTMLElement {
   static get observedAttributes() {
+    // reflect-only attributes (stateless)
     return ["pid", "title", "image", "genres", "seasons", "updated"];
   }
 
@@ -94,34 +83,22 @@ export class PodcastPreview extends HTMLElement {
       tags: this.shadowRoot.querySelector(".tags"),
     };
 
-    // A11y: make host behave like a button
-    this.setAttribute("role", "button");
-    if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "0");
-
     // Click -> bubble a custom event to the parent app
-    this.$.card.addEventListener("click", () => this._emitSelect());
-
-    // Keyboard activation (Enter/Space)
-    this.addEventListener("keydown", (ev) => {
-      const key = ev.key;
-      if (key === "Enter" || key === " ") {
-        ev.preventDefault(); // prevent page scroll on Space
-        this._emitSelect();
-      }
+    this.$.card.addEventListener("click", () => {
+      this.dispatchEvent(
+        new CustomEvent("podcast-select", {
+          bubbles: true,
+          composed: true, // allow crossing shadow boundary
+          detail: this.value, // normalized shape
+        })
+      );
     });
   }
 
-  // Emit selection event with normalized value
-  _emitSelect() {
-    this.dispatchEvent(
-      new CustomEvent("podcast-select", {
-        bubbles: true,
-        composed: true,
-        detail: this.value,
-      })
-    );
-  }
-
+  /**
+   * A normalized "value" the parent can rely on regardless of whether
+   * attributes or the .data setter was used.
+   */
   get value() {
     return {
       id: this.getAttribute("pid") || this._data?.id || "",
@@ -134,8 +111,10 @@ export class PodcastPreview extends HTMLElement {
     };
   }
 
+  /** Allow parent code to set a whole object: el.data = {...} */
   set data(obj) {
     this._data = obj ?? null;
+    // Reflect key fields to attributes so the component stays stateless by contract
     if (obj) {
       this.setAttribute("pid", obj.id ?? "");
       this.setAttribute("title", obj.title ?? "");
@@ -145,17 +124,14 @@ export class PodcastPreview extends HTMLElement {
       const g = Array.isArray(obj.genres) ? obj.genres.join(",") : (obj.genres ?? "");
       this.setAttribute("genres", g);
     }
-    this._syncAria();
   }
 
   attributeChangedCallback() {
     this._render();
-    this._syncAria();
   }
 
   connectedCallback() {
     this._render();
-    this._syncAria();
   }
 
   // ---- private helpers ----
@@ -166,33 +142,34 @@ export class PodcastPreview extends HTMLElement {
   }
 
   _readGenres() {
+    // Accept: "1,2,3" or "History,Comedy"
     const raw = this.getAttribute("genres");
     if (raw == null) return this._data?.genres ?? [];
     return raw
       .split(",")
-      .map((s) => s.trim())
+      .map(s => s.trim())
       .filter(Boolean)
-      .map((x) => (isNaN(Number(x)) ? x : Number(x)));
-  }
-
-  _syncAria() {
-    const title = this.getAttribute("title") || this._data?.title || "Open podcast details";
-    this.setAttribute("aria-label", `Open details for “${title}”`);
+      .map(x => (isNaN(Number(x)) ? x : Number(x))); // keep numbers as numbers
   }
 
   _render() {
     const v = this.value;
 
+    // image & title
     this.$.img.src = v.image || "";
     this.$.img.alt = v.title || "Podcast cover";
     this.$.title.textContent = v.title || "";
 
+    // seasons + updated
     const s = Number.isFinite(v.seasons) ? v.seasons : 0;
     this.$.seasons.textContent = s ? `${s} season${s > 1 ? "s" : ""}` : "";
     this.$.updated.textContent = v.updated ? DateUtils.format(v.updated) : "";
 
+    // genres: accept ids or names; resolve ids via GenreService
     const names =
-      typeof v.genres?.[0] === "number" ? GenreService.getNames(v.genres) : (v.genres || []);
+      typeof v.genres?.[0] === "number"
+        ? GenreService.getNames(v.genres)
+        : (v.genres || []);
     this.$.tags.innerHTML = names.map((g) => `<span class="tag">${g}</span>`).join("");
   }
 }
