@@ -14,27 +14,25 @@ The component is designed to be **modular, stateless, and framework-agnostic**, 
 - Emits a **`podcast-select`** custom event when clicked or activated with Enter / Space.  
 - Works completely independently from the main application logic.
 
-=========================
-
-## 🧩 Project Structure
+---
 
 📦 DJS02
-┣ 📂 src
-┃ ┣ 📂 components
-┃ ┃ ┣ 📜 PodcastPreview.js → main Web Component
-┃ ┃ ┗ 📜 createModal.js → modal controller with ARIA support
-┃ ┣ 📂 utils
-┃ ┃ ┣ 📜 DateUtils.js → formats ISO dates to “Updated Month Day, Year”
-┃ ┃ ┗ 📜 GenreService.js → resolves genre IDs to human-readable names
-┃ ┗ 📂 views
-┃ ┗ 📜 createGrid.js → renders < podcast-preview > cards
-┣ 📜 data.js → podcast and genre data
-┣ 📜 index.html → main app entry (for grid + modal)
-┣ 📜 demo.html → standalone component demo page
-┣ 📜 styles.css → global layout and modal styles
-┗ 📜 README.md → project documentation
+ ┣ 📂 src
+ ┃ ┣ 📂 components
+ ┃ ┃ ┣ 📜 PodcastPreview.js      → main Web Component
+ ┃ ┃ ┗ 📜 createModal.js         → modal controller with ARIA support
+ ┃ ┣ 📂 utils
+ ┃ ┃ ┣ 📜 DateUtils.js           → formats ISO dates to “Updated Month Day, Year”
+ ┃ ┃ ┗ 📜 GenreService.js        → resolves genre IDs to human-readable names
+ ┃ ┗ 📂 views
+ ┃   ┗ 📜 createGrid.js          → renders <podcast-preview> cards
+ ┣ 📜 data.js                    → podcast and genre data
+ ┣ 📜 index.html                 → main app entry (grid + modal)
+ ┣ 📜 demo.html                  → standalone component demo page
+ ┣ 📜 styles.css                 → global layout and modal styles
+ ┗ 📜 README.md                  → project documentation
 
-=========================
+---
 
 ## ⚙️ How to Run Locally
 
