@@ -33,6 +33,7 @@ DJS02
 ├─ styles.css                   → global layout and modal styles
 └─ README.md                    → project documentation
 
+---
 
 ## ⚙️ How to Run Locally
 
@@ -40,7 +41,7 @@ DJS02
 2. Open `index.html` directly in your browser (or use VS Code Live Server)  
 3. The podcast grid should load dynamically with interactive cards and a modal.
 
----
+
 
 ## 🎨 How to Interact (with the App)
 
