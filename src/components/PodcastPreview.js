@@ -69,7 +69,38 @@ TEMPLATE_HTML.innerHTML = `
   </article>
 `;
 
+/**
+ * Custom Web Component that renders a podcast preview card.
+ *
+ * Public API:
+ * 
+ * **Attributes**
+ * - `pid`      – string ID for the podcast  
+ * - `title`    – title text  
+ * - `image`    – URL for the cover image  
+ * - `genres`   – comma-separated list or JSON-like array of names/IDs  
+ * - `seasons`  – number of seasons (stringified number)  
+ * - `updated`  – ISO date string representing last updated date  
+ *
+ * **Property**
+ * - `data` – object form of all podcast fields  
+ *   `{ id, title, image, genres, seasons, updated, description }`  
+ *   Setting `.data` updates attributes so the component stays **stateless**
+ *   and always renders from attribute values.
+ *
+ * **Events**
+ * - `"podcast-select"` – fired on click/Enter/Space activation.  
+ *   `event.detail` contains the full `.value` object of the podcast.  
+ *
+ * **Design Goals**
+ * - Fully encapsulated via Shadow DOM  
+ * - Works with attributes *or* properties  
+ * - Emits events instead of opening modals itself  
+ * - Keyboard & screen-reader accessible  
+ * - Reusable across different apps/pages (demo.html proves this)  
+ */
 export class PodcastPreview extends HTMLElement {
+
   static get observedAttributes() {
     return ["pid", "title", "image", "genres", "seasons", "updated"];
   }
@@ -103,8 +134,6 @@ export class PodcastPreview extends HTMLElement {
   connectedCallback() {
     if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "0");
     if (!this.hasAttribute("role")) this.setAttribute("role", "button");
-
-    // New: advertise that activation opens a dialog
     if (!this.hasAttribute("aria-haspopup")) this.setAttribute("aria-haspopup", "dialog");
 
     this._syncAria();
@@ -136,7 +165,10 @@ export class PodcastPreview extends HTMLElement {
       this.setAttribute("image", obj.image ?? "");
       this.setAttribute("seasons", obj.seasons ?? "");
       this.setAttribute("updated", obj.updated ?? "");
-      const g = Array.isArray(obj.genres) ? obj.genres.join(",") : (obj.genres ?? "");
+
+      const g = Array.isArray(obj.genres)
+        ? obj.genres.join(",")
+        : (obj.genres ?? "");
       this.setAttribute("genres", g);
     }
   }
@@ -190,7 +222,10 @@ export class PodcastPreview extends HTMLElement {
       typeof v.genres?.[0] === "number"
         ? GenreService.getNames(v.genres)
         : (v.genres || []);
-    this.$.tags.innerHTML = names.map((g) => `<span class="tag">${g}</span>`).join("");
+
+    this.$.tags.innerHTML = names
+      .map((g) => `<span class="tag">${g}</span>`)
+      .join("");
   }
 }
 
