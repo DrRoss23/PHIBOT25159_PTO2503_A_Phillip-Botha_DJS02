@@ -14,7 +14,7 @@ The component is designed to be **modular, stateless, and framework-agnostic**, 
 - Emits a **`podcast-select`** custom event when clicked or activated with Enter / Space.  
 - Works completely independently from the main application logic.
 
----
+=========================
 
 ## 🧩 Project Structure
 
@@ -34,7 +34,7 @@ The component is designed to be **modular, stateless, and framework-agnostic**, 
 ┣ 📜 styles.css → global layout and modal styles
 ┗ 📜 README.md → project documentation
 
----
+=========================
 
 ## ⚙️ How to Run Locally
 
