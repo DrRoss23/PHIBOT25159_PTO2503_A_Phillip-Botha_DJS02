@@ -34,6 +34,8 @@ DJS02
 └─ README.md                    → project documentation
 
 ---
+================================================
+---
 
 ## ⚙️ How to Run Locally
 
